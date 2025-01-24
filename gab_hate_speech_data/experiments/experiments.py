@@ -1098,15 +1098,15 @@ ghc_dis['Hate_MV'] = ghc_dis[['Hate_0', 'Hate_11', 'Hate_13']].mode(axis=1)[0]
 ghc_dis['Hate_MV'] = ghc_dis['Hate_MV'].apply(lambda x: int(x))
 
 # Sample n rows where 'Hate_MV' is 1
-hate_speech_sample = ghc_dis[ghc_dis['Hate_MV'] == 1].sample(n=56, random_state=42)
+hate_speech_sample = ghc_dis[ghc_dis['Hate_MV'] == 1].sample(n=65, random_state=42)
 hate_speech_sample = hate_speech_sample.sample(frac=1, random_state=42)
 
 # Sample n rows where 'Hate_MV' is 0
-non_hate_speech_sample = ghc_dis[ghc_dis['Hate_MV'] == 0].sample(n=56, random_state=42)
+non_hate_speech_sample = ghc_dis[ghc_dis['Hate_MV'] == 0].sample(n=65, random_state=42)
 non_hate_speech_sample = non_hate_speech_sample.sample(frac=1, random_state=42)
 
 # Combine the two samples
-ghc_dis_dev = pd.concat([hate_speech_sample.head(6), non_hate_speech_sample.head(6)])
+ghc_dis_dev = pd.concat([hate_speech_sample.head(15), non_hate_speech_sample.head(15)])
 ghc_dis_test = pd.concat([hate_speech_sample.tail(50), non_hate_speech_sample.tail(50)])
 
 # Shuffle the combined sample to mix hate and non-hate rows
@@ -1153,18 +1153,36 @@ def get_prompts(df):
         - Then, output for Andy, Ben, and Chris an integer label for the target post, respectively: 1 if the annotator thinks it entails hate speech, 0 if not. E.g. Label by Andy: 0 | Label by Ben: 1 | Label by Chris: 0.
 
         Sample posts annotated by Andy, Ben, and Chris:
-        Post: This should be noted. India is deploying motivational speakers to ignite passion into its demoralized army. This must be taken seriously. This is psychological preparation for something huge. Signs of a coming war? Hmmmm | Label by Andy: 1 | Label by Ben: 0 | Label by Chris: 0
+        Post: A reason to ignore the word and continue to speak the truth! | Label by Andy: 0 | Label by Ben: 0 | Label by Chris: 0
+        Post: Hey  | Label by Andy: 1 | Label by Ben: 0 | Label by Chris: 0
+        Post: It's not being a grammar Nazi, dummy.  I wrote my comment to you to trigger you into defending it. Mission accomplished.  Good luck dipshit!   | Label by Andy: 0 | Label by Ben: 0 | Label by Chris: 0
+        Post: I feel your pain.  | Label by Andy: 1 | Label by Ben: 0 | Label by Chris: 0
+        Post: Assad's true crime?  Stepping on jew territory.  Only jews get an ethonstate, silly arab! | Label by Andy: 1 | Label by Ben: 1 | Label by Chris: 0
+        Post: Fucking Jew, Jew, Jew, Jew, LOL 😂 I love saying Jew! Jew bitch, Jew fagg, Jew pedophile, etc, etc! Add the word Jew to it and it automatically becomes derogatory! 😂 | Label by Andy: 1 | Label by Ben: 1 | Label by Chris: 1
         Post: Oh, but TWITter is a fun place today. I feel the shadow of ban coming upon my sunny social media day. | Label by Andy: 1 | Label by Ben: 0 | Label by Chris: 0
+        Post: All they will do is rename stuff, nothing will change. | Label by Andy: 0 | Label by Ben: 0 | Label by Chris: 0
+        Post: And it is truly shocking and discouraging to observe how many cowardly whites have chosen the second option.  They would rather their children face extinction at the hands of brutal, subhuman muslims than be seen as ‘racists’. | Label by Andy: 1 | Label by Ben: 1 | Label by Chris: 0
+        Post: @jolokia @ThePraedor‍   | Label by Andy: 1 | Label by Ben: 1 | Label by Chris: 0
+        Post: Feminism is now Female Supremacism as women have all the rights that men have and they still have special privileges in the courts and in our culture. Cultural Marxists who hate America, Whites, and the West are the leaders and preachers of Third Wave Feminism. | Label by Andy: 1 | Label by Ben: 1 | Label by Chris: 0
+        Post: Primal Fear - We Walk Without Fear   | Label by Andy: 0 | Label by Ben: 0 | Label by Chris: 0
+        Post: It's different when BLM or antifa are beating on spitting on and throwing shit at white people and not a damn thing is done about it. And people are going to wonder why if the KKK comes back stong. Shouldn't be double standards because the color of your skin. Or people will seek justice on their own | Label by Andy: 1 | Label by Ben: 1 | Label by Chris: 0
+        Post: If we can get Nazis away from Nazism, especially away from anti-Semitism, that is better. Nazism and anti-Semitism are the problem, not ‘true racism.’ Do not be a typical leftist liberal Antifa-type and paint ‘true racists’ and Nazis with the same brush. It is reverse psychology. | Label by Andy: 0 | Label by Ben: 1 | Label by Chris: 1
+        Post: The trouble is Muslims will soon own everything. | Label by Andy: 1 | Label by Ben: 1 | Label by Chris: 0
+        Post: Oh nice, I'll make sure to check it out. Good job on taking the initiative to spread the message and reach our a hand to our men and women! | Label by Andy: 0 | Label by Ben: 0 | Label by Chris: 0
+        Post: Good luck with that, we used to own half of the world what has an islamic country done. | Label by Andy: 1 | Label by Ben: 1 | Label by Chris: 0
         Post: I don't mind the occasional gas the kikes thrown in as long as it's satirical and makes me laugh a bit at their discomfort. 😎 | Label by Andy: 1 | Label by Ben: 1 | Label by Chris: 1
         Post: It's 100% OK - thank you 😉 | Label by Andy: 0 | Label by Ben: 0 | Label by Chris: 0
-        Post: What every good little faggot needs. | Label by Andy: 1 | Label by Ben: 0 | Label by Chris: 1
+        Post: The only way to stop these animals is to hang them one by one in the city square so others from their culture can see what happens when you rape one of ours. | Label by Andy: 1 | Label by Ben: 0 | Label by Chris: 1
+        Post: Maybe Q is right maybe not but right now I hope | Label by Andy: 0 | Label by Ben: 0 | Label by Chris: 0
+        Post: I noticed black people on TV reality shows bashing Melania and not Michelle. There is a wall blocking their brains from reality. We see after election, when Michelle is interviewed or is a speaker, she shows no class. Melania, on the other hand, shows class with beauty. | Label by Andy: 1 | Label by Ben: 0 | Label by Chris: 0
+        Post: UBERMENSCHEIT: HEALTH PROTOCOLS  | Label by Andy: 0 | Label by Ben: 0 | Label by Chris: 0
+        Post: Upon study and cross reference, I believe the sword mentioned is the spiritual one obtained by belief in God and following His word..   | Label by Andy: 0 | Label by Ben: 0 | Label by Chris: 0
+        Post: This is standard operating procedure for the DNC smear machine. Nothing new, they have been doing it many years. They are the most guilty of the things they accuse others of doing. We have less than half a Congress because more than half are criminal leftists & RINOs! | Label by Andy: 1 | Label by Ben: 0 | Label by Chris: 0
+        Post: Where is that Nicolas Cage meme when you need it?  | Label by Andy: 1 | Label by Ben: 1 | Label by Chris: 0
         Post: How many MILLIONS of ILLEGAL ALIENS voted for HILLARY⁉️Who cares, that had no IMPACT on the election. RETARDS. | Label by Andy: 1 | Label by Ben: 1 | Label by Chris: 0
-        Post: Feminism is now Female Supremacism as women have all the rights that men have and they still have special privileges in the courts and in our culture. Cultural Marxists who hate America, Whites, and the West are the leaders and preachers of Third Wave Feminism. | Label by Andy: 1 | Label by Ben: 1 | Label by Chris: 0
-        Post: Communism and socialism is going to rock Europe this summer, all these tiny "Rules" have also been implimented in California USA... Europe is heading for war. | Label by Andy: 1 | Label by Ben: 0 | Label by Chris: 0
-        Post: kikes are liars and thieves. | Label by Andy: 1 | Label by Ben: 1 | Label by Chris: 0
+        Post: "The challenge of this age is in convincing typical white people that it is not socialism they should fear, it is extermination. There are still people waddling around in their tricorn hats talking about the socialist menace. Mention race to them and they start hyperventilating about their constitutional principles." - @TheZBlog | Label by Andy: 1 | Label by Ben: 1 | Label by Chris: 0
         Post: "All our dignity lies in our thoughts." - Blaise Pascal.  | Label by Andy: 0 | Label by Ben: 0 | Label by Chris: 0
-        Post: If we can get Nazis away from Nazism, especially away from anti-Semitism, that is better. Nazism and anti-Semitism are the problem, not ‘true racism.’ Do not be a typical leftist liberal Antifa-type and paint ‘true racists’ and Nazis with the same brush. It is reverse psychology. | Label by Andy: 0 | Label by Ben: 1 | Label by Chris: 1
-        Post: I feel your pain.  | Label by Andy: 1 | Label by Ben: 0 | Label by Chris: 0 """
+        Post: The Jew wants to kill and breed out Whites. Jews lobby for the White Genocide in South Africa and their jingo sell out race traitor libtards follow suit. | Label by Andy: 1 | Label by Ben: 1 | Label by Chris: 1 """
 
         p_user = f"""Here is the target post: {post}"""
 
