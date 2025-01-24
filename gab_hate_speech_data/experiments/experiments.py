@@ -21,8 +21,8 @@ from sklearn.metrics import confusion_matrix, f1_score, ConfusionMatrixDisplay
 
 openai.api_key = 'OPENAI_API_KEY'
 
-ghc_path = 'GabHateCorpus_annotations.tsv'
-dis_path = 'GabHateCorpus/disagrees_between_0_11.csv'
+ghc_path = 'PATH/GabHateCorpus_annotations.tsv'
+dis_path = 'PATH/disagrees_between_0_11.csv'
 
 ghc = pd.read_csv(ghc_path, sep = '\t')
 dis = pd.read_csv(dis_path)
