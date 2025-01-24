@@ -1283,3 +1283,193 @@ df['Hate_MV_diff'] = abs(df['Hate_MV'] - df['Hate_MV_LLM'])
 df['Hate_0_diff'] = abs(df['Hate_0'] - df['Hate_0_LLM'])
 df['Hate_11_diff'] = abs(df['Hate_11'] - df['Hate_11_LLM'])
 df['Hate_13_diff'] = abs(df['Hate_13'] - df['Hate_13_LLM'])
+
+"""### S5 Modeling Uncertainty"""
+
+# Reshape the DataFrame to a tall format
+ghc_dis_dev_tall = ghc_dis_dev.melt(
+    id_vars=['ID', 'Text'],  # Columns to keep as-is
+    value_vars=['Hate_0', 'Hate_11', 'Hate_13'],  # Columns to unpivot
+    var_name='Annotator',  # Name for the column indicating annotator
+    value_name='Hate'  # Name for the column with annotation labels
+)
+
+# Optional: Clean the 'Annotator' column to remove the prefix 'Hate_'
+ghc_dis_dev_tall['Annotator'] = ghc_dis_dev_tall['Annotator'].str.replace('Hate_', '')
+
+ghc_dis_dev_tall = ghc_dis_dev_tall.sample(frac=1, random_state=42)
+
+# Initialize an empty string to store the merged paragraph
+paragraph = ""
+
+# Iterate through each row in the dataframe
+for index, row in ghc_dis_dev_tall.iterrows():
+    post = row['Text']
+    label = row['Hate']
+    paragraph += f" Post: {post} | Label: {label} \n"
+
+print(paragraph)
+
+model = 'gpt-4o'
+
+def get_prompts(df):
+
+    posts = df['Text'].tolist()
+
+    prompts = []
+    for post in posts:
+        p_system = f"""You are a helpful research assistant with expertise in detecting hate speech from social media posts.
+
+        Objective: The task is to evaluate social media posts and predict the labels assigned by human annotators, determining whether a post constitutes hate speech based on specific aspects of hate speech it may exhibit. Samples labeled by them are provided for reference. Carefully review these samples and consider how they would label the target post, respectively, and provide a label that human annotators are most likely assign for each of them.
+
+        Aspects of Hate Speech to Consider:
+        - Assaults on Human Dignity: Does the post demean or degrade individuals or groups based on race, ethnicity, gender, religion, sexual orientation, or other protected characteristics?
+        - Calls for Violence: Does the post incite or encourage physical harm or violence against individuals or groups?
+        - Vulgarity and/or Offensive Language: Does the post contain profanity, slurs, or other offensive language that may or may not be directed at individuals or groups?
+
+        Instructions:
+        - Review the Post: Carefully read the social media post and consider its content in relation to the three aspects of hate speech listed above.
+        - Assess Agreement: 1) High Disagreement: If the post contains ambiguous language or context, or if it is likely to be interpreted differently based on subjective views about the severity or nature of hate speech, categorize the post as 'high' disagreement. 2) Low Disagreement: If the post clearly falls into one or more of the hate speech categories or is obviously not hate speech, categorize the post as 'low' disagreement due to likely annotator consensus.
+        - Context Sensitivity: Consider the cultural, social, and linguistic context that may influence the interpretation of the post. Posts that rely heavily on nuanced or context-specific language may result in higher disagreement.
+
+        Output Format:
+        - For each target post, first provide a brief reasoning on how human annotators would label it, based on specific aspects of hate speech it may exhibit.
+        - Then, output an integer label for the target post: 1 if human annotators think it entails hate speech, 0 if not.
+
+        Sample posts annotated by Andy, Ben, and Chris:
+        Post: I feel your pain.  | Label: 0
+        Post: Oh, but TWITter is a fun place today. I feel the shadow of ban coming upon my sunny social media day. | Label: 0
+        Post: I don't mind the occasional gas the kikes thrown in as long as it's satirical and makes me laugh a bit at their discomfort. 😎 | Label: 1
+        Post: Feminism is now Female Supremacism as women have all the rights that men have and they still have special privileges in the courts and in our culture. Cultural Marxists who hate America, Whites, and the West are the leaders and preachers of Third Wave Feminism. | Label: 0
+        Post: What every good little faggot needs. | Label: 0
+        Post: Communism and socialism is going to rock Europe this summer, all these tiny "Rules" have also been implimented in California USA... Europe is heading for war. | Label: 0
+        Post: "All our dignity lies in our thoughts." - Blaise Pascal.  | Label: 0
+        Post: This should be noted. India is deploying motivational speakers to ignite passion into its demoralized army. This must be taken seriously. This is psychological preparation for something huge. Signs of a coming war? Hmmmm | Label: 0
+        Post: kikes are liars and thieves. | Label: 1
+        Post: How many MILLIONS of ILLEGAL ALIENS voted for HILLARY⁉️Who cares, that had no IMPACT on the election. RETARDS. | Label: 1
+        Post: "All our dignity lies in our thoughts." - Blaise Pascal.  | Label: 0
+        Post: If we can get Nazis away from Nazism, especially away from anti-Semitism, that is better. Nazism and anti-Semitism are the problem, not ‘true racism.’ Do not be a typical leftist liberal Antifa-type and paint ‘true racists’ and Nazis with the same brush. It is reverse psychology. | Label: 1
+        Post: This should be noted. India is deploying motivational speakers to ignite passion into its demoralized army. This must be taken seriously. This is psychological preparation for something huge. Signs of a coming war? Hmmmm | Label: 1
+        Post: What every good little faggot needs. | Label: 1
+        Post: How many MILLIONS of ILLEGAL ALIENS voted for HILLARY⁉️Who cares, that had no IMPACT on the election. RETARDS. | Label: 0
+        Post: It's 100% OK - thank you 😉 | Label: 0
+        Post: Communism and socialism is going to rock Europe this summer, all these tiny "Rules" have also been implimented in California USA... Europe is heading for war. | Label: 0
+        Post: How many MILLIONS of ILLEGAL ALIENS voted for HILLARY⁉️Who cares, that had no IMPACT on the election. RETARDS. | Label: 1
+        Post: I feel your pain.  | Label: 1
+        Post: Oh, but TWITter is a fun place today. I feel the shadow of ban coming upon my sunny social media day. | Label: 1
+        Post: This should be noted. India is deploying motivational speakers to ignite passion into its demoralized army. This must be taken seriously. This is psychological preparation for something huge. Signs of a coming war? Hmmmm | Label: 0
+        Post: I don't mind the occasional gas the kikes thrown in as long as it's satirical and makes me laugh a bit at their discomfort. 😎 | Label: 1
+        Post: "All our dignity lies in our thoughts." - Blaise Pascal.  | Label: 0
+        Post: It's 100% OK - thank you 😉 | Label: 0
+        Post: kikes are liars and thieves. | Label: 0
+        Post: I feel your pain.  | Label: 0
+        Post: It's 100% OK - thank you 😉 | Label: 0
+        Post: If we can get Nazis away from Nazism, especially away from anti-Semitism, that is better. Nazism and anti-Semitism are the problem, not ‘true racism.’ Do not be a typical leftist liberal Antifa-type and paint ‘true racists’ and Nazis with the same brush. It is reverse psychology. | Label: 0
+        Post: If we can get Nazis away from Nazism, especially away from anti-Semitism, that is better. Nazism and anti-Semitism are the problem, not ‘true racism.’ Do not be a typical leftist liberal Antifa-type and paint ‘true racists’ and Nazis with the same brush. It is reverse psychology. | Label: 1
+        Post: Feminism is now Female Supremacism as women have all the rights that men have and they still have special privileges in the courts and in our culture. Cultural Marxists who hate America, Whites, and the West are the leaders and preachers of Third Wave Feminism. | Label: 1
+        Post: Oh, but TWITter is a fun place today. I feel the shadow of ban coming upon my sunny social media day. | Label: 0
+        Post: Feminism is now Female Supremacism as women have all the rights that men have and they still have special privileges in the courts and in our culture. Cultural Marxists who hate America, Whites, and the West are the leaders and preachers of Third Wave Feminism. | Label: 1
+        Post: kikes are liars and thieves. | Label: 1
+        Post: Communism and socialism is going to rock Europe this summer, all these tiny "Rules" have also been implimented in California USA... Europe is heading for war. | Label: 1
+        Post: I don't mind the occasional gas the kikes thrown in as long as it's satirical and makes me laugh a bit at their discomfort. 😎 | Label: 1
+        Post: What every good little faggot needs. | Label: 1 """
+
+        p_user = f"""Here is the target post: {post}"""
+
+        prompts.append([p_system, p_user])
+
+    return prompts
+
+class detect_annotator_label(BaseModel):
+
+    """Detect Annotators' label on Hate Speech Posts"""
+    Reasoning: str = Field(description=f"A brief reasoning of how annotator Andy might label the post when assessing it.")
+    Label: str = Field(description=f"An integer label for the target post: 1 if the annotator thinks it entails hate speech, 0 if not.")
+    Raw_output: str = Field(description=f"The raw text output of the LLM.")
+
+functions = [
+    convert_to_openai_function(detect_annotator_label)
+]
+
+def get_output(prompts, df, model):
+
+    posts = {}
+
+    # define model
+    model = ChatOpenAI(
+          model=model,
+          openai_api_key=openai.api_key,
+          temperature=0,
+          )
+    model = model.bind(
+        functions=functions,
+        function_call={"name":"detect_annotator_label"},
+        )
+
+    # define parser
+    parser = JsonOutputFunctionsParser()
+
+    for i in range(len(prompts)):
+
+        p_system, p_user = [*prompts[i]]
+
+        # define prompt message
+        prompt = ChatPromptTemplate.from_messages([
+            ("system", p_system),
+            ("user", "{input}")
+            ])
+
+        # create a chatbot chain
+        chain = prompt | model | parser
+
+        input = p_user
+        output = chain.invoke({"input": input})
+
+        post_id = 'post_' + str(i)
+        posts[post_id] = {
+            'ID': df['Text'].iloc[i],
+            'Text': df['Text'].iloc[i],
+            'Hate_MV': df['Hate_MV'].iloc[i],
+            'Hate_0': df['Hate_0'].iloc[i],
+            'Hate_11': df['Hate_11'].iloc[i],
+            'Hate_13': df['Hate_13'].iloc[i],
+            'Reasoning_LLM': output['Reasoning'],
+            'Hate_LLM': output['Label'],
+            'Raw_output_LLM': output['Raw_output'],
+            }
+
+    return posts
+
+prompts = get_prompts(ghc_dis_test)
+output = get_output(prompts, ghc_dis_test, model=model)
+
+# Extracting data for DataFrame
+data = []
+for post_key, post_value in output.items():
+    row = {
+        'ID': post_value['ID'],
+        'Text': post_value['Text'],
+        'Hate_MV': post_value['Hate_MV'],
+        'Hate_0': post_value['Hate_0'],
+        'Hate_11': post_value['Hate_11'],
+        'Hate_13': post_value['Hate_13'],
+        'Reasoning_LLM': post_value['Reasoning_LLM'],
+        'Hate_LLM': eval(post_value['Hate_LLM']),
+        'Raw_output_LLM': post_value['Raw_output_LLM'],
+    }
+    data.append(row)
+
+# Creating DataFrame
+columns = [
+    'Text',
+    'Hate_MV',
+    'Hate_0',
+    'Hate_11',
+    'Hate_13',
+    'Reasoning_LLM',
+    'Hate_LLM',
+    'Raw_output_LLM',
+    ]
+df = pd.DataFrame(data, columns=columns)
+
+df['Hate_MV_diff'] = abs(df['Hate_MV'] - df['Hate_LLM'])
